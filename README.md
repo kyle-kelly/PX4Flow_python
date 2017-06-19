@@ -1,5 +1,5 @@
 # PX4Flow_python
-Python wrapper to communicate with PX4Flow smart camera via SMBus
+Python wrapper to communicate with PX4Flow smart camera via SMBus. The code was designed to run on the Raspberry Pi 3.
 
 ## PX4Flow_I2C.py
 A class to hold I2C frame data from PX4Flow. You must first create a sensor instance:
