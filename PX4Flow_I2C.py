@@ -77,17 +77,17 @@ class PX4Flow_I2C(object):
 		i2c_frame = self.bus.read_i2c_block_data(self.address, 0x00, 22)
 
 		self.frame_count = i2c_frame[0] | (i2c_frame[1] << 8)
-		self.pixel_flow_x_sum = i2c_frame[2] | (i2c_frame[3] << 8)
-		self.pixel_flow_y_sum = i2c_frame[4] | (i2c_frame[5] << 8)
-		self.flow_comp_m_x = i2c_frame[6] | (i2c_frame[7] << 8)
-		self.flow_comp_m_y = i2c_frame[8] | (i2c_frame[9] << 8)
-		self.qual = i2c_frame[10] | (i2c_frame[11] << 8)
-		self.gyro_x_rate = i2c_frame[12] | (i2c_frame[13] << 8)
-		self.gyro_y_rate = i2c_frame[14] | (i2c_frame[15] << 8)
-		self.gyro_z_rate = i2c_frame[16] | (i2c_frame[17] << 8)
+		self.pixel_flow_x_sum = self.twos_comp(i2c_frame[2] | (i2c_frame[3] << 8), 16)
+		self.pixel_flow_y_sum = self.twos_comp(i2c_frame[4] | (i2c_frame[5] << 8), 16)
+		self.flow_comp_m_x = self.twos_comp(i2c_frame[6] | (i2c_frame[7] << 8), 16)
+		self.flow_comp_m_y = self.twos_comp(i2c_frame[8] | (i2c_frame[9] << 8), 16)
+		self.qual = self.twos_comp(i2c_frame[10] | (i2c_frame[11] << 8), 16)
+		self.gyro_x_rate = self.twos_comp(i2c_frame[12] | (i2c_frame[13] << 8), 16)
+		self.gyro_y_rate = self.twos_comp(i2c_frame[14] | (i2c_frame[15] << 8), 16)
+		self.gyro_z_rate = self.twos_comp(i2c_frame[16] | (i2c_frame[17] << 8), 16)
 		self.gyro_range = i2c_frame[18]
 		self.sonar_timestamp = i2c_frame[19]
-		self.ground_distance = i2c_frame[20] | (i2c_frame[21] << 8)
+		self.ground_distance = self.twos_comp(i2c_frame[20] | (i2c_frame[21] << 8), 16)
 
 	def integral_update(self):
 		"""Send 0x16 to PX4FLOW module and receive back 25 bytes of data in registers 0x16-0x2E"""
@@ -96,13 +96,20 @@ class PX4Flow_I2C(object):
 		i2c_integral_frame = self.bus.read_i2c_block_data(self.address, 0x16, 25)
 
 		self.frame_count_since_last_readout = i2c_integral_frame[0] | (i2c_integral_frame[1] << 8)
-		self.pixel_flow_x_integral = i2c_integral_frame[2] | (i2c_integral_frame[3] << 8)
-		self.pixel_flow_y_integral = i2c_integral_frame[4] | (i2c_integral_frame[5] << 8)
-		self.gyro_x_rate_integral = i2c_integral_frame[6] | (i2c_integral_frame[7] << 8)
-		self.gyro_y_rate_integral = i2c_integral_frame[8] | (i2c_integral_frame[9] << 8)
-		self.gyro_z_rate_integral = i2c_integral_frame[10] | (i2c_integral_frame[11] << 8)
-		self.integration_timespan = i2c_integral_frame[12] | (i2c_integral_frame[13] << 8)
-		self.sonar_timestamp = i2c_integral_frame[14] | (i2c_integral_frame[15] << 8) | (i2c_integral_frame[16] << 16) | (i2c_integral_frame[17] << 24)
-		self.ground_distance = i2c_integral_frame[18] | (i2c_integral_frame[19] << 8) | (i2c_integral_frame[20] << 16) | (i2c_integral_frame[21] << 24)
-		self.gyro_temperature = i2c_integral_frame[22] | (i2c_integral_frame[23] << 8)
+		self.pixel_flow_x_integral = self.twos_comp(i2c_integral_frame[2] | (i2c_integral_frame[3] << 8), 16)
+		self.pixel_flow_y_integral = self.twos_comp(i2c_integral_frame[4] | (i2c_integral_frame[5] << 8), 16)
+		self.gyro_x_rate_integral = self.twos_comp(i2c_integral_frame[6] | (i2c_integral_frame[7] << 8), 16)
+		self.gyro_y_rate_integral = self.twos_comp(i2c_integral_frame[8] | (i2c_integral_frame[9] << 8), 16)
+		self.gyro_z_rate_integral = self.twos_comp(i2c_integral_frame[10] | (i2c_integral_frame[11] << 8), 16)
+		self.integration_timespan = i2c_integral_frame[12] | (i2c_integral_frame[13] << 8) | (i2c_integral_frame[14] << 16) | (i2c_integral_frame[15] << 24)
+		self.sonar_timestamp = i2c_integral_frame[16] | (i2c_integral_frame[17] << 8) | (i2c_integral_frame[18] << 16) | (i2c_integral_frame[19] << 24)
+		self.ground_distance = self.twos_comp(i2c_integral_frame[20] | (i2c_integral_frame[21] << 8), 16)
+		self.gyro_temperature = self.twos_comp(i2c_integral_frame[22] | (i2c_integral_frame[23] << 8), 16)
 		self.quality = i2c_integral_frame[24]
+
+	def twos_comp(self, val, bits):
+	    """compute the 2's complement of int value val"""
+	    
+	    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+	        val = val - (1 << bits)        # compute negative value
+	    return val                         # return positive value as is
