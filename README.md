@@ -4,24 +4,24 @@ Python wrapper to communicate with PX4Flow smart camera via SMBus
 ## PX4Flow_I2C.py
 A class to hold I2C frame data from PX4Flow. You must first create a sensor instance:
 
-'''
+```python
 #Create sensor instance
 bus = smbus.SMBus(1) # This will be 1 or 2
 address = 0x42 # 7 Bit I2C Address of the Flow Module
 px4flow = px4f.PX4Flow_I2C(bus, address)
-'''
+```
 
 You can then ping the hardware to update and receive one of two data frames:
 
-'''
+```python
 #I2C frame values
 px4flow.update()
-'''
+```
 
-'''
+```python
 #Integral I2C frame values
 px4flow.integral_update()
-'''
+```
 
 Then you can call on any of the values.
 
